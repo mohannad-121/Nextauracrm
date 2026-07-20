@@ -5,10 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { AiAssistantPanel } from "@/components/ai-assistant-panel";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -23,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const items = [
     { to: "/dashboard", icon: LayoutDashboard, label: t("dashboard") },
     { to: "/requests", icon: Users, label: t("requests") },
-    { to: "/admin/careers", icon: Briefcase, label: t("careerApps") },
+    { to: "/careers", icon: Briefcase, label: t("careerApps") },
   ] as const;
 
   const nav = (
@@ -40,7 +42,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             to={it.to}
             onClick={() => setOpen(false)}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-              active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent/40"
+              active
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/40"
             }`}
           >
             <it.icon className="w-4 h-4" />
@@ -52,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         type="button"
         onClick={() => {
           setOpen(false);
-          window.dispatchEvent(new CustomEvent("open-ai-assistant"));
+          setAssistantOpen(true);
         }}
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/40"
       >
@@ -101,6 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
+      <AiAssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
     </div>
   );
 }

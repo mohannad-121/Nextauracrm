@@ -24,8 +24,9 @@ The timestamped files in `supabase/migrations` are for Supabase CLI migration hi
 
 - make the first/oldest account the CRM administrator if no role exists yet;
 - leave later public signups pending until an administrator assigns a role;
-- create the private `cvs` Storage bucket with a 5 MB file limit and document MIME restrictions; and
-- grant authenticated users the sequence access required to generate request numbers.
+- create the private legacy `cvs` Storage bucket without anonymous upload access;
+- grant authenticated users the sequence access required to generate request numbers; and
+- create the authenticated, staff-managed Career Portal with name, phone, ID, field, and links.
 
 For an existing project that already contains the base CRM tables, apply only pending timestamped migrations. You can do that with the Supabase CLI after authenticating and linking the correct project:
 
@@ -37,6 +38,14 @@ npx supabase db push
 ```
 
 Always review the dry run before pushing. Do not run `fresh-project-setup.sql` against a database where the CRM tables already exist.
+
+For an existing database that already has the CRM schema, the Career Portal change is the file below. Run it once through the CLI flow above, or paste its complete contents into **Supabase Dashboard → SQL Editor** and select **Run**:
+
+```text
+supabase/migrations/20260720201318_internal_career_profiles.sql
+```
+
+This migration disables anonymous career submissions and creates `public.career_profiles`. The `/careers` page will show a migration-required message until it has been applied.
 
 ### Auth settings
 

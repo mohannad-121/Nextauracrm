@@ -357,7 +357,9 @@ CREATE POLICY "Update own activities" ON public.request_activities FOR UPDATE TO
 CREATE POLICY "Admin delete activities" ON public.request_activities FOR DELETE TO authenticated
   USING (public.has_role(auth.uid(),'admin'));
 
--- ============ CAREER APPLICATIONS ============
+-- ============ LEGACY CAREER APPLICATIONS ============
+-- Kept for historical data compatibility. New records are created only in
+-- career_profiles through the authenticated internal portal below.
 CREATE TABLE public.career_applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name TEXT NOT NULL,
@@ -392,13 +394,10 @@ CREATE TABLE public.career_applications (
 CREATE INDEX idx_careers_status ON public.career_applications(status);
 CREATE INDEX idx_careers_field ON public.career_applications(field_of_interest);
 
-GRANT INSERT ON public.career_applications TO anon, authenticated;
 GRANT SELECT, UPDATE, DELETE ON public.career_applications TO authenticated;
 GRANT ALL ON public.career_applications TO service_role;
 ALTER TABLE public.career_applications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can submit application" ON public.career_applications FOR INSERT
-  WITH CHECK (consent = true);
 CREATE POLICY "Staff read applications" ON public.career_applications FOR SELECT TO authenticated
   USING (public.is_staff(auth.uid()));
 CREATE POLICY "Admin/manager update applications" ON public.career_applications FOR UPDATE TO authenticated
@@ -452,11 +451,9 @@ REVOKE EXECUTE ON FUNCTION public.is_staff(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_staff(uuid) TO authenticated;
 
--- Storage: CVs bucket policies
+-- Storage: legacy CV bucket policies. There is intentionally no upload policy.
 CREATE POLICY "Staff can read CVs" ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'cvs' AND public.is_staff(auth.uid()));
-CREATE POLICY "Anyone can upload CV" ON storage.objects FOR INSERT TO anon, authenticated
-  WITH CHECK (bucket_id = 'cvs');
 CREATE POLICY "Admin/manager delete CVs" ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'cvs' AND (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager')));
 
@@ -538,8 +535,7 @@ BEGIN
 END;
 $$;
 
--- The careers form uploads CVs here. Keep the bucket private; staff access is
--- controlled by the storage policies in the preceding migration.
+-- Preserve the private legacy bucket for historical files. Public uploads are disabled.
 INSERT INTO storage.buckets (
   id,
   name,
@@ -563,5 +559,71 @@ SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- ============ INTERNAL CAREER PORTAL ============
+-- Public applications are disabled. The legacy table and bucket remain so
+-- historical records are preserved, but only the internal portal accepts data.
+REVOKE INSERT ON TABLE public.career_applications FROM anon, authenticated;
+DROP POLICY IF EXISTS "Anyone can submit application" ON public.career_applications;
+DROP POLICY IF EXISTS "Anyone can upload CV" ON storage.objects;
+
+CREATE TABLE public.career_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name TEXT NOT NULL CHECK (length(btrim(full_name)) > 0),
+  phone TEXT NOT NULL CHECK (length(btrim(phone)) > 0),
+  identity_number TEXT NOT NULL CHECK (length(btrim(identity_number)) > 0),
+  field TEXT NOT NULL CHECK (length(btrim(field)) > 0),
+  links TEXT[] NOT NULL DEFAULT '{}'::TEXT[] CHECK (cardinality(links) <= 20),
+  created_by UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE SET NULL,
+  archived_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX career_profiles_identity_number_unique
+  ON public.career_profiles (lower(identity_number));
+CREATE INDEX career_profiles_field_idx ON public.career_profiles (field);
+CREATE INDEX career_profiles_active_created_idx
+  ON public.career_profiles (created_at DESC)
+  WHERE archived_at IS NULL;
+CREATE INDEX career_profiles_created_by_idx ON public.career_profiles (created_by);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.career_profiles TO authenticated;
+GRANT ALL ON TABLE public.career_profiles TO service_role;
+
+ALTER TABLE public.career_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Staff read career profiles"
+  ON public.career_profiles
+  FOR SELECT
+  TO authenticated
+  USING ((SELECT public.is_staff((SELECT auth.uid()))));
+
+CREATE POLICY "Staff create career profiles"
+  ON public.career_profiles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    (SELECT public.is_staff((SELECT auth.uid())))
+    AND created_by = (SELECT auth.uid())
+  );
+
+CREATE POLICY "Staff update career profiles"
+  ON public.career_profiles
+  FOR UPDATE
+  TO authenticated
+  USING ((SELECT public.is_staff((SELECT auth.uid()))))
+  WITH CHECK ((SELECT public.is_staff((SELECT auth.uid()))));
+
+CREATE POLICY "Admins delete career profiles"
+  ON public.career_profiles
+  FOR DELETE
+  TO authenticated
+  USING ((SELECT public.has_role((SELECT auth.uid()), 'admin')));
+
+CREATE TRIGGER trg_career_profiles_updated
+  BEFORE UPDATE ON public.career_profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
 
 COMMIT;

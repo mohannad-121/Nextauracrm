@@ -12,12 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccessPendingRouteImport } from './routes/access-pending'
-import { Route as CareersRouteImport } from './routes/careers'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AuthenticatedCareersRouteImport } from './routes/_authenticated/careers'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedRequestsRouteImport } from './routes/_authenticated/requests'
-import { Route as AuthenticatedAdminCareersRouteImport } from './routes/_authenticated/admin.careers'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,11 +32,6 @@ const AccessPendingRoute = AccessPendingRouteImport.update({
   path: '/access-pending',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CareersRoute = CareersRouteImport.update({
-  id: '/careers',
-  path: '/careers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -47,6 +41,11 @@ const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCareersRoute = AuthenticatedCareersRouteImport.update({
+  id: '/careers',
+  path: '/careers',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -58,84 +57,71 @@ const AuthenticatedRequestsRoute = AuthenticatedRequestsRouteImport.update({
   path: '/requests',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminCareersRoute =
-  AuthenticatedAdminCareersRouteImport.update({
-    id: '/admin/careers',
-    path: '/admin/careers',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-pending': typeof AccessPendingRoute
-  '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/careers': typeof AuthenticatedCareersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/requests': typeof AuthenticatedRequestsRoute
-  '/admin/careers': typeof AuthenticatedAdminCareersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-pending': typeof AccessPendingRoute
-  '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/careers': typeof AuthenticatedCareersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/requests': typeof AuthenticatedRequestsRoute
-  '/admin/careers': typeof AuthenticatedAdminCareersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/access-pending': typeof AccessPendingRoute
-  '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/careers': typeof AuthenticatedCareersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/requests': typeof AuthenticatedRequestsRoute
-  '/_authenticated/admin/careers': typeof AuthenticatedAdminCareersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/access-pending'
-    | '/careers'
     | '/login'
     | '/signup'
+    | '/careers'
     | '/dashboard'
     | '/requests'
-    | '/admin/careers'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/access-pending'
-    | '/careers'
     | '/login'
     | '/signup'
+    | '/careers'
     | '/dashboard'
     | '/requests'
-    | '/admin/careers'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/access-pending'
-    | '/careers'
     | '/login'
     | '/signup'
+    | '/_authenticated/careers'
     | '/_authenticated/dashboard'
     | '/_authenticated/requests'
-    | '/_authenticated/admin/careers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccessPendingRoute: typeof AccessPendingRoute
-  CareersRoute: typeof CareersRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
 }
@@ -163,13 +149,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccessPendingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/careers': {
-      id: '/careers'
-      path: '/careers'
-      fullPath: '/careers'
-      preLoaderRoute: typeof CareersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -183,6 +162,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/careers': {
+      id: '/_authenticated/careers'
+      path: '/careers'
+      fullPath: '/careers'
+      preLoaderRoute: typeof AuthenticatedCareersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -198,26 +184,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRequestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/careers': {
-      id: '/_authenticated/admin/careers'
-      path: '/admin/careers'
-      fullPath: '/admin/careers'
-      preLoaderRoute: typeof AuthenticatedAdminCareersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCareersRoute: typeof AuthenticatedCareersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedRequestsRoute: typeof AuthenticatedRequestsRoute
-  AuthenticatedAdminCareersRoute: typeof AuthenticatedAdminCareersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCareersRoute: AuthenticatedCareersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedRequestsRoute: AuthenticatedRequestsRoute,
-  AuthenticatedAdminCareersRoute: AuthenticatedAdminCareersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -227,7 +206,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccessPendingRoute: AccessPendingRoute,
-  CareersRoute: CareersRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
 }

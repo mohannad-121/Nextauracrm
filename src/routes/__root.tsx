@@ -83,13 +83,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "NextAura AI — Internal CRM" },
       {
         name: "description",
-        content: "Internal client & careers management system for NextAura AI.",
+        content: "Internal client and talent management system for NextAura AI.",
       },
       { name: "author", content: "NextAura AI" },
       { property: "og:title", content: "NextAura AI — Internal CRM" },
       {
         property: "og:description",
-        content: "Internal client & careers management system for NextAura AI.",
+        content: "Internal client and talent management system for NextAura AI.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

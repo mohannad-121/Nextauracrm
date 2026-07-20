@@ -22,12 +22,6 @@ function Landing() {
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <Link
-            to="/careers"
-            className="text-sm text-muted-foreground hover:text-foreground px-3 py-2"
-          >
-            Careers
-          </Link>
-          <Link
             to={signedIn ? "/dashboard" : "/login"}
             className="text-sm brand-gradient-bg text-primary-foreground font-medium px-4 py-2 rounded-lg"
           >
@@ -56,8 +50,8 @@ function Landing() {
             </span>
           </h1>
           <p className="text-muted-foreground">
-            A focused CRM for tracking client requests, payments, follow-ups, and career
-            applications.
+            A focused internal CRM for tracking client requests, payments, follow-ups, and your
+            private talent directory.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
@@ -74,12 +68,6 @@ function Landing() {
                 {t("createAccount")}
               </Link>
             )}
-            <Link
-              to="/careers"
-              className="border border-border px-6 py-3 rounded-lg hover:bg-accent/20"
-            >
-              Careers portal
-            </Link>
           </div>
         </div>
       </main>

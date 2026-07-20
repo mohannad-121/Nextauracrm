@@ -166,6 +166,45 @@ export type Database = {
         }
         Relationships: []
       }
+      career_profiles: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          field: string
+          full_name: string
+          id: string
+          identity_number: string
+          links: string[]
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          field: string
+          full_name: string
+          id?: string
+          identity_number: string
+          links?: string[]
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          field?: string
+          full_name?: string
+          id?: string
+          identity_number?: string
+          links?: string[]
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_requests: {
         Row: {
           actual_delivery_date: string | null
