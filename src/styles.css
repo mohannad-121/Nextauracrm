@@ -148,14 +148,41 @@
     background: var(--gradient-surface);
     background-attachment: fixed;
     color: var(--color-foreground);
-    font-feature-settings: "cv02","cv03","cv04","cv11";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
   }
-  html { color-scheme: dark; }
-  html[dir="rtl"] body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif; }
+  html {
+    color-scheme: dark;
+  }
+  html[dir="rtl"] body {
+    font-family:
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Tahoma,
+      sans-serif;
+  }
+}
+
+@layer base {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    outline-offset: 2px;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--ring);
+  }
 }
 
 @utility glass-card {
-  background: color-mix(in oklab, var(--card) 70%, transparent);
+  background: color-mix(in oklab, var(--card) 82%, transparent);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

@@ -23,6 +23,8 @@ import {
   TrendingUp,
   Users2,
   FileClock,
+  ArrowRight,
+  CheckCircle2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -72,13 +74,13 @@ function useDashboardData() {
           r.expected_delivery_date < today &&
           !["completed", "delivered", "cancelled", "rejected"].includes(r.status)
         ) {
-          attention.push({ id: r.id, label: `Overdue delivery`, kind: "overdue" });
+          attention.push({ id: r.id, label: `Delivery overdue`, kind: "overdue" });
         }
         if (r.next_follow_up_date && r.next_follow_up_date <= today) {
           attention.push({ id: r.id, label: `Follow-up due`, kind: "followup" });
         }
         if (!r.assigned_to && ["approved", "in_progress"].includes(r.status)) {
-          attention.push({ id: r.id, label: `Unassigned`, kind: "unassigned" });
+          attention.push({ id: r.id, label: `Needs an owner`, kind: "unassigned" });
         }
       }
 
@@ -127,15 +129,17 @@ function Card({
   accent?: boolean;
 }) {
   return (
-    <div className="glass-card p-4 flex items-start justify-between">
+    <div
+      className={`flex items-start justify-between rounded-xl border p-4 ${accent ? "border-primary/30 bg-primary/10" : "border-border bg-card/55"}`}
+    >
       <div>
         <div className="text-xs text-muted-foreground">{title}</div>
-        <div className={`text-2xl font-semibold mt-1 ${accent ? "brand-gradient-text" : ""}`}>
-          {value}
-        </div>
+        <div className={`text-2xl font-semibold mt-1 ${accent ? "text-primary" : ""}`}>{value}</div>
       </div>
-      <div className="w-9 h-9 rounded-lg brand-gradient-bg opacity-80 flex items-center justify-center">
-        <Icon className="w-4 h-4 text-primary-foreground" />
+      <div
+        className={`flex h-9 w-9 items-center justify-center rounded-lg ${accent ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+      >
+        <Icon className="w-4 h-4" />
       </div>
     </div>
   );
@@ -179,10 +183,23 @@ function DashboardPage() {
         <Card title={t("careerApps")} value={data.careerCount} icon={BriefcaseBusiness} />
       </div>
 
-      <div className="glass-card p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="w-4 h-4 text-amber-400" />
-          <h2 className="font-semibold">{t("needsAttention")}</h2>
+      <section className="rounded-xl border border-border bg-card/55 p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <h2 className="font-semibold">Today’s focus</h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Start with the work that needs a decision or follow-up.
+            </p>
+          </div>
+          <a
+            href="/requests"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            View requests <ArrowRight className="h-3.5 w-3.5" />
+          </a>
         </div>
         {data.attention.length === 0 ? (
           <p className="text-sm text-muted-foreground">All clear — no urgent items.</p>
@@ -198,7 +215,7 @@ function DashboardPage() {
             ))}
           </ul>
         )}
-      </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass-card p-4">
