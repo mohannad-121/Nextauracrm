@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Archive,
   CalendarClock,
   FileText,
   FolderOpen,
@@ -18,8 +17,18 @@ import type { Database } from "@/integrations/supabase/types";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { RequestStageProgress } from "@/components/request-stage-progress";
+import {
+  RequestActivityTab,
+  RequestFilesTab,
+  RequestPaymentsTab,
+  RequestTasksTab,
+} from "@/components/request-operations-tabs";
 
-type Props = { requestId: string | null; onClose: () => void; onEdit: (id: string) => void };
+type Props = {
+  requestId: string | null;
+  onClose: () => void;
+  onEdit: (id: string) => void;
+};
 type Tab = "overview" | "activity" | "tasks" | "files" | "payments";
 type ClientRequest = Database["public"]["Tables"]["client_requests"]["Row"];
 
@@ -177,45 +186,10 @@ function DetailContent({
         />
       </div>
     );
-  if (tab === "activity") return <Timeline request={request} />;
-  if (tab === "tasks")
-    return (
-      <EmptyState
-        title="Tasks are ready for this request"
-        text={
-          request.next_follow_up_date
-            ? `Next follow-up is scheduled for ${fmtDate(request.next_follow_up_date)}.`
-            : "Add a next follow-up date from Edit to keep work moving."
-        }
-        icon={CalendarClock}
-      />
-    );
-  if (tab === "files")
-    return (
-      <EmptyState
-        title="No files attached"
-        text="Files will appear here when they are added to the request."
-        icon={FolderOpen}
-      />
-    );
-  return (
-    <div className="space-y-4">
-      <Metric
-        label="Amount paid"
-        value={fmtMoney(request.amount_paid, request.currency ?? "JOD")}
-      />
-      <Metric
-        label="Balance remaining"
-        value={fmtMoney(outstanding, request.currency ?? "JOD")}
-        alert={outstanding > 0}
-      />
-      <Info
-        title="Payment status"
-        icon={ReceiptText}
-        lines={[request.payment_status.replaceAll("_", " ")]}
-      />
-    </div>
-  );
+  if (tab === "activity") return <RequestActivityTab request={request} />;
+  if (tab === "tasks") return <RequestTasksTab request={request} />;
+  if (tab === "files") return <RequestFilesTab request={request} />;
+  return <RequestPaymentsTab request={request} />;
 }
 
 function Metric({ label, value, alert }: { label: string; value: string; alert?: boolean }) {
@@ -249,41 +223,5 @@ function Info({
         </p>
       ))}
     </section>
-  );
-}
-function EmptyState({
-  title,
-  text,
-  icon: Icon,
-}: {
-  title: string;
-  text: string;
-  icon: typeof Archive;
-}) {
-  return (
-    <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 text-center">
-      <Icon className="h-6 w-6 text-primary" />
-      <h3 className="mt-3 text-sm font-medium">{title}</h3>
-      <p className="mt-1 max-w-sm text-xs text-muted-foreground">{text}</p>
-    </div>
-  );
-}
-function Timeline({ request }: { request: ClientRequest }) {
-  const items = [
-    ["Request updated", request.updated_at],
-    ["Request created", request.created_at],
-    request.quote_date && ["Quote date", request.quote_date],
-    request.agreement_date && ["Agreement date", request.agreement_date],
-  ].filter(Boolean) as [string, string][];
-  return (
-    <ol className="space-y-4 border-s border-border ps-5">
-      {items.map(([label, date]) => (
-        <li key={label} className="relative">
-          <span className="absolute -start-[1.6rem] top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
-          <p className="text-sm font-medium">{label}</p>
-          <p className="text-xs text-muted-foreground">{fmtDate(date)}</p>
-        </li>
-      ))}
-    </ol>
   );
 }

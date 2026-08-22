@@ -1,5 +1,18 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Briefcase, Sparkles, LogOut, Menu, Search, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Briefcase,
+  Sparkles,
+  LogOut,
+  Menu,
+  Search,
+  X,
+  Building2,
+  KanbanSquare,
+  ListTodo,
+  BarChart3,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +45,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const items = [
     { to: "/dashboard", icon: LayoutDashboard, label: t("dashboard") },
     { to: "/requests", icon: Users, label: t("requests") },
+    { to: "/clients", icon: Building2, label: "Clients" },
+    { to: "/pipeline", icon: KanbanSquare, label: "Pipeline" },
+    { to: "/tasks", icon: ListTodo, label: "My work" },
+    { to: "/reports", icon: BarChart3, label: "Reports" },
     { to: "/careers", icon: Briefcase, label: t("careerApps") },
   ] as const;
 
