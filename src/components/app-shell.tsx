@@ -20,6 +20,7 @@ import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { AiAssistantPanel } from "@/components/ai-assistant-panel";
 import { CommandMenu } from "@/components/command-menu";
+import nextAuraLogo from "../../logo/logo-no-background.png";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
@@ -55,7 +56,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const nav = (
     <nav className="flex flex-col gap-1 p-3">
       <div className="px-3 py-4 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg brand-gradient-bg" />
+        <div className="relative h-8 w-8 shrink-0 overflow-hidden" aria-hidden="true">
+          <img
+            src={nextAuraLogo}
+            alt=""
+            className="absolute left-[-15px] top-[-18px] h-auto w-[61px] max-w-none"
+          />
+        </div>
         <div className="font-semibold brand-gradient-text">{t("brand")}</div>
       </div>
       {items.map((it) => {
