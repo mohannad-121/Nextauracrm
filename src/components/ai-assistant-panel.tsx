@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bot, Loader2, Send, Sparkles, UserRound } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { STATUS_LABELS, type RequestStatus } from "@/lib/constants";
+import { answerCrmQuestion } from "@/lib/crm-assistant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,155 +26,32 @@ const INITIAL_MESSAGE: ChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "I can summarize your live CRM data. Ask about the request pipeline, follow-ups, payments, or the talent directory.",
+    "\u2728 I am your live CRM assistant. Ask me about any client, project, payment, unpaid balance, estimated cost, task, follow-up, invoice, file, category, career profile, or deleted project.",
 };
 
 const SUGGESTIONS = [
-  "Summarize the request pipeline",
-  "Which follow-ups are due?",
-  "Show the payment summary",
-  "Summarize the talent directory",
+  "\u{1F4B0} How much money has been paid?",
+  "\u{26A0}\u{FE0F} What needs attention today?",
+  "\u{1F4C1} Show the project pipeline",
+  "\u{1F465} Give me a client breakdown",
+  "\u{1F9FE} Show invoices and milestones",
+  "\u{1F4CA} Give me the full business overview",
 ];
 
-const FINISHED_STATUSES = new Set(["completed", "cancelled", "rejected"]);
+const CAPABILITIES = [
+  "\u{1F465} Clients",
+  "\u{1F4C1} Projects",
+  "\u{1F4B0} Money",
+  "\u{1F4CB} Tasks",
+  "\u{1F4C5} Follow-ups",
+  "\u{1F9FE} Invoices",
+  "\u{1F5D1}\u{FE0F} Deleted",
+];
 
 function messageId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random()}`;
-}
-
-function money(value: number, currency: string): string {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${value.toFixed(2)} ${currency}`;
-  }
-}
-
-async function pipelineSummary(): Promise<string> {
-  const { data, error } = await supabase
-    .from("client_requests")
-    .select("status")
-    .is("archived_at", null)
-    .limit(500);
-
-  if (error) throw error;
-
-  const counts = new Map<string, number>();
-  for (const request of data) {
-    counts.set(request.status, (counts.get(request.status) ?? 0) + 1);
-  }
-
-  const active = data.filter((request) => !FINISHED_STATUSES.has(request.status)).length;
-  const breakdown = Array.from(counts.entries())
-    .sort((left, right) => right[1] - left[1])
-    .map(([status, count]) => `• ${STATUS_LABELS[status as RequestStatus]?.en ?? status}: ${count}`)
-    .join("\n");
-
-  return data.length === 0
-    ? "There are no client requests yet."
-    : `There are ${data.length} requests in total and ${active} are active.\n\n${breakdown}`;
-}
-
-async function followUpSummary(): Promise<string> {
-  const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await supabase
-    .from("client_requests")
-    .select("request_number,customer_name,project_title,next_follow_up_date,status")
-    .is("archived_at", null)
-    .not("next_follow_up_date", "is", null)
-    .lte("next_follow_up_date", today)
-    .order("next_follow_up_date", { ascending: true })
-    .limit(20);
-
-  if (error) throw error;
-
-  const due = data.filter((request) => !FINISHED_STATUSES.has(request.status));
-  if (due.length === 0) return "No active follow-ups are due today or overdue.";
-
-  const lines = due.map((request) => {
-    const reference = request.request_number ?? request.project_title;
-    const timing = request.next_follow_up_date === today ? "today" : request.next_follow_up_date;
-    return `• ${reference} — ${request.customer_name} (${timing})`;
-  });
-
-  return `${due.length} active follow-up${due.length === 1 ? " is" : "s are"} due:\n\n${lines.join("\n")}`;
-}
-
-async function paymentSummary(): Promise<string> {
-  const { data, error } = await supabase
-    .from("client_requests")
-    .select("agreed_price,amount_paid,currency")
-    .is("archived_at", null)
-    .limit(500);
-
-  if (error) throw error;
-
-  const totals = new Map<string, { agreed: number; paid: number }>();
-  for (const request of data) {
-    const currency = request.currency || "JOD";
-    const current = totals.get(currency) ?? { agreed: 0, paid: 0 };
-    current.agreed += Number(request.agreed_price ?? 0);
-    current.paid += Number(request.amount_paid ?? 0);
-    totals.set(currency, current);
-  }
-
-  if (totals.size === 0) return "There are no payment records yet.";
-
-  return Array.from(totals.entries())
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([currency, total]) => {
-      const remaining = total.agreed - total.paid;
-      return `${currency}: agreed ${money(total.agreed, currency)}, received ${money(total.paid, currency)}, remaining ${money(remaining, currency)}.`;
-    })
-    .join("\n");
-}
-
-async function talentSummary(): Promise<string> {
-  const { data, error } = await supabase
-    .from("career_profiles")
-    .select("field")
-    .is("archived_at", null)
-    .limit(500);
-
-  if (error) {
-    if (error.code === "42P01" || error.code === "PGRST205") {
-      return "The internal Career Portal migration has not been installed yet. Run the latest Supabase migration, then try again.";
-    }
-    throw error;
-  }
-
-  if (data.length === 0) return "The talent directory is empty. Add profiles from Career Portal.";
-
-  const fields = new Map<string, number>();
-  for (const profile of data) {
-    fields.set(profile.field, (fields.get(profile.field) ?? 0) + 1);
-  }
-
-  const breakdown = Array.from(fields.entries())
-    .sort((left, right) => right[1] - left[1])
-    .map(([field, count]) => `• ${field}: ${count}`)
-    .join("\n");
-
-  return `There are ${data.length} active profiles in the internal talent directory.\n\n${breakdown}`;
-}
-
-async function answerPrompt(prompt: string): Promise<string> {
-  const normalized = prompt.toLowerCase();
-
-  if (/follow|due|overdue/.test(normalized)) return followUpSummary();
-  if (/pay|revenue|money|received|remaining/.test(normalized)) return paymentSummary();
-  if (/career|talent|people|candidate|profile/.test(normalized)) return talentSummary();
-  if (/request|pipeline|status|lead|project|summary|overview/.test(normalized)) {
-    return pipelineSummary();
-  }
-
-  return "I currently understand questions about the request pipeline, due follow-ups, payments, and the talent directory. Choose a suggestion below or ask using one of those topics.";
 }
 
 export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) {
@@ -197,19 +73,19 @@ export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) 
     setLoading(true);
 
     try {
-      const response = await answerPrompt(cleanPrompt);
+      const response = await answerCrmQuestion(cleanPrompt);
       setMessages((current) => [
         ...current,
         { id: messageId(), role: "assistant", content: response },
       ]);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not load CRM data.";
+      const message = error instanceof Error ? error.message : "Could not load live CRM data.";
       setMessages((current) => [
         ...current,
         {
           id: messageId(),
           role: "assistant",
-          content: `I could not complete that request: ${message}`,
+          content: `\u{26A0}\u{FE0F} I could not complete that request: ${message}`,
         },
       ]);
     } finally {
@@ -228,12 +104,24 @@ export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) 
         <SheetHeader className="border-b border-border p-5 pr-12 text-left">
           <div className="flex items-center gap-2 text-primary">
             <Sparkles className="h-4 w-4" />
-            <span className="text-xs font-semibold uppercase tracking-[0.18em]">Live CRM data</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em]">
+              Live CRM intelligence
+            </span>
           </div>
           <SheetTitle>AI Assistant</SheetTitle>
           <SheetDescription>
-            Quick answers based only on records your account is allowed to see.
+            Answers are generated from the live records your account is allowed to access.
           </SheetDescription>
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            {CAPABILITIES.map((capability) => (
+              <span
+                key={capability}
+                className="rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary"
+              >
+                {capability}
+              </span>
+            ))}
+          </div>
         </SheetHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -268,7 +156,7 @@ export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) 
           {loading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Checking CRM data…
+              Checking live CRM intelligence...
             </div>
           )}
           <div ref={endRef} />
@@ -292,7 +180,7 @@ export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) 
             <Input
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              placeholder="Ask about your CRM…"
+              placeholder="Ask anything about your CRM..."
               aria-label="Ask the AI Assistant"
               disabled={loading}
               autoComplete="off"
