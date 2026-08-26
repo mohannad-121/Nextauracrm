@@ -1,3 +1,5 @@
+import { getBusinessCategory } from "@/lib/business-categories";
+
 type CategoryStyle = {
   dot: string;
   badge: string;
@@ -110,17 +112,19 @@ function fallbackStyle(category: string) {
   return FALLBACK_STYLES[hash % FALLBACK_STYLES.length];
 }
 
-export function BusinessCategoryBadge({ category }: { category: string }) {
+export function BusinessCategoryBadge({ category }: { category: string | null | undefined }) {
+  const businessCategory = getBusinessCategory(category);
   const style =
-    CATEGORY_STYLES.find(({ match }) => match.test(category))?.style ?? fallbackStyle(category);
+    CATEGORY_STYLES.find(({ match }) => match.test(businessCategory.label))?.style ??
+    fallbackStyle(businessCategory.label);
 
   return (
     <span
       className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${style.badge} ${style.text}`}
-      title={category}
+      title={businessCategory.label}
     >
       <span className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`} aria-hidden="true" />
-      <span className="truncate">{category}</span>
+      <span className="truncate">{businessCategory.label}</span>
     </span>
   );
 }

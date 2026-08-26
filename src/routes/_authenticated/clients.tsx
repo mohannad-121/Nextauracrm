@@ -5,6 +5,7 @@ import { Building2, Mail, MessageCircle, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ClientProfileDrawer } from "@/components/client-profile-drawer";
 import { BusinessCategoryBadge } from "@/components/business-category-badge";
+import { getBusinessCategory, type BusinessCategory } from "@/lib/business-categories";
 import { operationsDb, type Client } from "@/lib/operations-db";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/clients")({
 function ClientsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selected, setSelected] = useState<Client | null>(null);
   const [adding, setAdding] = useState(false);
   const { data: clients = [], isLoading } = useQuery({
@@ -30,9 +32,20 @@ function ClientsPage() {
       return data ?? [];
     },
   });
-  const filtered = useMemo(() => {
+  const categories = useMemo(() => {
+    const grouped = new Map<string, { category: BusinessCategory; count: number }>();
+    clients.forEach((client) => {
+      const category = getBusinessCategory(client.business_name);
+      const current = grouped.get(category.key);
+      grouped.set(category.key, { category, count: (current?.count ?? 0) + 1 });
+    });
+    return [...grouped.values()].toSorted(
+      (a, b) => b.count - a.count || a.category.label.localeCompare(b.category.label),
+    );
+  }, [clients]);
+  const visibleClients = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return !term
+    const matchingClients = !term
       ? clients
       : clients.filter((client) =>
           [
@@ -43,7 +56,12 @@ function ClientsPage() {
             client.source,
           ].some((value) => value?.toLowerCase().includes(term)),
         );
-  }, [clients, search]);
+    return selectedCategory
+      ? matchingClients.filter(
+          (client) => getBusinessCategory(client.business_name).key === selectedCategory,
+        )
+      : matchingClients;
+  }, [clients, search, selectedCategory]);
   async function addClient(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -102,47 +120,120 @@ function ClientsPage() {
       {isLoading ? (
         <p className="text-muted-foreground">Loading clients…</p>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((client) => (
-            <button
-              key={client.id}
-              onClick={() => setSelected(client)}
-              className="rounded-xl border border-border bg-card/55 p-4 text-start transition hover:border-primary/40 hover:bg-accent/10"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{client.display_name}</p>
-                  <div className="mt-1">
-                    <BusinessCategoryBadge category={client.business_name || "Individual"} />
-                  </div>
-                </div>
-                <Building2 className="h-5 w-5 shrink-0 text-muted-foreground" />
+        <>
+          <section aria-labelledby="client-categories-heading">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 id="client-categories-heading" className="font-semibold">
+                  Browse by category
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Choose a category to show only its clients.
+                </p>
               </div>
-              <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
-                {client.email && (
-                  <p className="flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5" />
-                    {client.email}
-                  </p>
-                )}
-                {client.phone && (
-                  <p className="flex items-center gap-2">
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    {client.phone}
-                  </p>
-                )}
-              </div>
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
-                <span className="rounded-full bg-muted px-2 py-1">
-                  {client.source || "Unattributed"}
+              <span className="text-sm text-muted-foreground">{clients.length} total clients</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                aria-pressed={!selectedCategory}
+                className={`flex min-h-24 cursor-pointer items-center justify-between rounded-xl border p-4 text-start transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  !selectedCategory
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-card/55 hover:border-primary/40 hover:bg-accent/10"
+                }`}
+              >
+                <span>
+                  <span className="block font-semibold">All clients</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    View every category
+                  </span>
                 </span>
-                <span>Open profile →</span>
-              </div>
-            </button>
-          ))}
-        </div>
+                <span className="text-2xl font-semibold text-primary">{clients.length}</span>
+              </button>
+              {categories.map(({ category, count }) => (
+                <button
+                  key={category.key}
+                  type="button"
+                  onClick={() => setSelectedCategory(category.key)}
+                  aria-pressed={selectedCategory === category.key}
+                  className={`flex min-h-24 cursor-pointer items-center justify-between rounded-xl border p-4 text-start transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    selectedCategory === category.key
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card/55 hover:border-primary/40 hover:bg-accent/10"
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <BusinessCategoryBadge category={category.label} />
+                    <span className="mt-2 block text-xs text-muted-foreground">
+                      View clients in this category
+                    </span>
+                  </span>
+                  <span className="text-2xl font-semibold text-primary">{count}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {visibleClients.length} client{visibleClients.length === 1 ? "" : "s"}
+              {selectedCategory
+                ? ` in ${categories.find((item) => item.category.key === selectedCategory)?.category.label ?? "this category"}`
+                : " shown"}
+            </p>
+            {selectedCategory ? (
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Clear category
+              </button>
+            ) : null}
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {visibleClients.map((client) => (
+              <button
+                key={client.id}
+                onClick={() => setSelected(client)}
+                className="cursor-pointer rounded-xl border border-border bg-card/55 p-4 text-start transition-colors duration-200 hover:border-primary/40 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{client.display_name}</p>
+                    <div className="mt-1">
+                      <BusinessCategoryBadge category={client.business_name} />
+                    </div>
+                  </div>
+                  <Building2 className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </div>
+                <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                  {client.email && (
+                    <p className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5" />
+                      {client.email}
+                    </p>
+                  )}
+                  {client.phone && (
+                    <p className="flex items-center gap-2">
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      {client.phone}
+                    </p>
+                  )}
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
+                  <span className="rounded-full bg-muted px-2 py-1">
+                    {client.source || "Unattributed"}
+                  </span>
+                  <span>Open profile →</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
       )}
-      {!isLoading && filtered.length === 0 && (
+      {!isLoading && visibleClients.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           No client profiles match this search.
         </div>
