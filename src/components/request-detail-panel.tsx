@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarClock,
   FileText,
@@ -8,6 +8,7 @@ import {
   Phone,
   ReceiptText,
   StickyNote,
+  Trash2,
   UserRound,
   X,
 } from "lucide-react";
@@ -17,6 +18,16 @@ import type { Database } from "@/integrations/supabase/types";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { RequestStageProgress } from "@/components/request-stage-progress";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import {
   RequestActivityTab,
   RequestFilesTab,
@@ -41,7 +52,11 @@ const tabs: { id: Tab; label: string; Icon: typeof FileText }[] = [
 ];
 
 export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("overview");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteCode, setDeleteCode] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const { data: request, isLoading } = useQuery({
     queryKey: ["client-request", requestId],
     enabled: Boolean(requestId),
@@ -55,11 +70,45 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
       return data;
     },
   });
+  const { data: canDeleteProject = false } = useQuery({
+    queryKey: ["project-delete-permission"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return false;
+
+      const { data: role, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return role?.role === "admin";
+    },
+  });
   if (!requestId) return null;
   const outstanding = Math.max(
     0,
     Number(request?.agreed_price ?? 0) - Number(request?.amount_paid ?? 0),
   );
+
+  async function deleteProject() {
+    if (!request || deleteCode !== "0000" || !canDeleteProject) return;
+
+    setDeleting(true);
+    const { error } = await supabase.from("client_requests").delete().eq("id", request.id);
+    setDeleting(false);
+
+    if (error) {
+      toast.error("Unable to delete this project.");
+      return;
+    }
+
+    toast.success("Project deleted.");
+    queryClient.invalidateQueries();
+    setDeleteOpen(false);
+    setDeleteCode("");
+    onClose();
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal aria-label="Request details">
@@ -129,8 +178,55 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
           ) : (
             request && <DetailContent tab={tab} request={request} outstanding={outstanding} />
           )}
+          {request && canDeleteProject && (
+            <div className="mt-5 border-t border-destructive/30 bg-destructive/5 pt-5">
+              <button
+                onClick={() => setDeleteOpen(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete project
+              </button>
+            </div>
+          )}
         </div>
       </section>
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open);
+          if (!open) setDeleteCode("");
+        }}
+      >
+        <AlertDialogContent className="border-destructive/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to permanently delete this project. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            value={deleteCode}
+            onChange={(event) => setDeleteCode(event.target.value)}
+            className="w-full rounded-md border border-input bg-input px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-destructive"
+            aria-label="Confirmation code"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <button
+              type="button"
+              onClick={deleteProject}
+              disabled={deleteCode !== "0000" || deleting}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-4 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
+            >
+              {deleting ? "Deleting…" : "Delete project"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
