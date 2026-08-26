@@ -35,7 +35,18 @@ export const Route = createFileRoute("/_authenticated/requests")({
 });
 
 type Quick =
-  "all" | "new_leads" | "quotes" | "in_progress" | "overdue" | "waiting" | "unpaid" | "completed";
+  | "all"
+  | "active"
+  | "new_leads"
+  | "quotes"
+  | "approved"
+  | "in_progress"
+  | "overdue"
+  | "follow_today"
+  | "follow_week"
+  | "waiting"
+  | "unpaid"
+  | "completed";
 type Column = "priority" | "delivery" | "followUp" | "money";
 const DEFAULT_COLUMNS: Record<Column, boolean> = {
   priority: true,
@@ -44,12 +55,33 @@ const DEFAULT_COLUMNS: Record<Column, boolean> = {
   money: true,
 };
 
+const QUICK_FILTERS = new Set<Quick>([
+  "all",
+  "active",
+  "new_leads",
+  "quotes",
+  "approved",
+  "in_progress",
+  "overdue",
+  "follow_today",
+  "follow_week",
+  "waiting",
+  "unpaid",
+  "completed",
+]);
+
+function initialQuickFilter(): Quick {
+  if (typeof window === "undefined") return "all";
+  const quick = new URLSearchParams(window.location.search).get("quick");
+  return quick && QUICK_FILTERS.has(quick as Quick) ? (quick as Quick) : "all";
+}
+
 function RequestsPage() {
   const { t, lang } = useI18n();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [quick, setQuick] = useState<Quick>("all");
+  const [quick, setQuick] = useState<Quick>(initialQuickFilter);
   const [drawer, setDrawer] = useState<{ open: boolean; id: string | null }>({
     open: false,
     id: null,
@@ -116,11 +148,17 @@ function RequestsPage() {
     }
     if (statusFilter) rows = rows.filter((r) => r.status === statusFilter);
     switch (quick) {
+      case "active":
+        rows = rows.filter((r) => !["completed", "cancelled", "rejected"].includes(r.status));
+        break;
       case "new_leads":
         rows = rows.filter((r) => r.status === "new_lead");
         break;
       case "quotes":
         rows = rows.filter((r) => ["quote_sent", "negotiating"].includes(r.status));
+        break;
+      case "approved":
+        rows = rows.filter((r) => r.status === "approved");
         break;
       case "in_progress":
         rows = rows.filter((r) => r.status === "in_progress");
@@ -133,6 +171,19 @@ function RequestsPage() {
             !["completed", "delivered", "cancelled", "rejected"].includes(r.status),
         );
         break;
+      case "follow_today":
+        rows = rows.filter((r) => r.next_follow_up_date === today);
+        break;
+      case "follow_week": {
+        const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+        rows = rows.filter(
+          (r) =>
+            r.next_follow_up_date &&
+            r.next_follow_up_date >= today &&
+            r.next_follow_up_date <= weekAhead,
+        );
+        break;
+      }
       case "waiting":
         rows = rows.filter((r) => r.status === "waiting_for_client");
         break;
@@ -161,10 +212,14 @@ function RequestsPage() {
 
   const quicks: { k: Quick; label: string }[] = [
     { k: "all", label: t("all") },
+    { k: "active", label: "Active" },
     { k: "new_leads", label: "New leads" },
     { k: "quotes", label: "Quotes" },
+    { k: "approved", label: "Approved" },
     { k: "in_progress", label: "In progress" },
     { k: "overdue", label: "Overdue" },
+    { k: "follow_today", label: "Follow-ups today" },
+    { k: "follow_week", label: "Follow-ups this week" },
     { k: "waiting", label: "Waiting" },
     { k: "unpaid", label: "Unpaid" },
     { k: "completed", label: "Completed" },

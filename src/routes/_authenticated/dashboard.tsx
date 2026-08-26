@@ -123,15 +123,19 @@ function Card({
   value,
   icon: Icon,
   accent,
+  href,
 }: {
   title: string;
   value: string | number;
   icon: LucideIcon;
   accent?: boolean;
+  href: string;
 }) {
   return (
-    <div
-      className={`flex items-start justify-between rounded-xl border p-4 ${accent ? "border-primary/30 bg-primary/10" : "border-border bg-card/55"}`}
+    <a
+      href={href}
+      aria-label={`View ${title}`}
+      className={`flex items-start justify-between rounded-xl border p-4 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${accent ? "border-primary/30 bg-primary/10 hover:border-primary/60 hover:bg-primary/15" : "border-border bg-card/55 hover:border-primary/40 hover:bg-accent/10"}`}
     >
       <div>
         <div className="text-xs text-muted-foreground">{title}</div>
@@ -142,7 +146,7 @@ function Card({
       >
         <Icon className="w-4 h-4" />
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -170,18 +174,75 @@ function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card title={t("activeRequests")} value={data.active} icon={Users2} accent />
-        <Card title={t("newLeads")} value={data.newLeads} icon={TrendingUp} />
-        <Card title={t("quotesAwaiting")} value={data.quotesAwaiting} icon={FileClock} />
-        <Card title={t("approvedProjects")} value={data.approved} icon={TrendingUp} />
-        <Card title={t("inProgress")} value={data.inProgress} icon={Clock} />
-        <Card title={t("overdue")} value={data.overdue} icon={AlertTriangle} />
-        <Card title={t("followUpsToday")} value={data.followToday} icon={Clock} />
-        <Card title={t("followUpsWeek")} value={data.followWeek} icon={Clock} />
-        <Card title={t("agreedRevenue")} value={fmtMoney(data.agreed)} icon={DollarSign} accent />
-        <Card title={t("received")} value={fmtMoney(data.paid)} icon={DollarSign} />
-        <Card title={t("remaining")} value={fmtMoney(data.remaining)} icon={DollarSign} />
-        <Card title={t("careerApps")} value={data.careerCount} icon={BriefcaseBusiness} />
+        <Card
+          title={t("activeRequests")}
+          value={data.active}
+          icon={Users2}
+          accent
+          href="/requests?quick=active"
+        />
+        <Card
+          title={t("newLeads")}
+          value={data.newLeads}
+          icon={TrendingUp}
+          href="/requests?quick=new_leads"
+        />
+        <Card
+          title={t("quotesAwaiting")}
+          value={data.quotesAwaiting}
+          icon={FileClock}
+          href="/requests?quick=quotes"
+        />
+        <Card
+          title={t("approvedProjects")}
+          value={data.approved}
+          icon={TrendingUp}
+          href="/requests?quick=approved"
+        />
+        <Card
+          title={t("inProgress")}
+          value={data.inProgress}
+          icon={Clock}
+          href="/requests?quick=in_progress"
+        />
+        <Card
+          title={t("overdue")}
+          value={data.overdue}
+          icon={AlertTriangle}
+          href="/requests?quick=overdue"
+        />
+        <Card
+          title={t("followUpsToday")}
+          value={data.followToday}
+          icon={Clock}
+          href="/requests?quick=follow_today"
+        />
+        <Card
+          title={t("followUpsWeek")}
+          value={data.followWeek}
+          icon={Clock}
+          href="/requests?quick=follow_week"
+        />
+        <Card
+          title={t("agreedRevenue")}
+          value={fmtMoney(data.agreed)}
+          icon={DollarSign}
+          accent
+          href="/reports"
+        />
+        <Card title={t("received")} value={fmtMoney(data.paid)} icon={DollarSign} href="/reports" />
+        <Card
+          title={t("remaining")}
+          value={fmtMoney(data.remaining)}
+          icon={DollarSign}
+          href="/requests?quick=unpaid"
+        />
+        <Card
+          title={t("careerApps")}
+          value={data.careerCount}
+          icon={BriefcaseBusiness}
+          href="/careers"
+        />
       </div>
 
       <section className="rounded-xl border border-primary/25 bg-primary/5 p-5">
@@ -197,12 +258,14 @@ function DashboardPage() {
             value={fmtMoney(data.paid / 2)}
             icon={UserRound}
             accent
+            href="/reports"
           />
           <Card
             title="Moayad's share · 50%"
             value={fmtMoney(data.paid / 2)}
             icon={UserRound}
             accent
+            href="/reports"
           />
         </div>
       </section>
