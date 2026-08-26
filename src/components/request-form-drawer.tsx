@@ -91,6 +91,8 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
   const { t, lang } = useI18n();
   const qc = useQueryClient();
   const [form, setForm] = useState<RequestForm>(emptyForm);
+  const [amountPaid, setAmountPaid] = useState(0);
+  const [newPaymentAmount, setNewPaymentAmount] = useState("");
   const [saving, setSaving] = useState(false);
 
   const { data: categories } = useQuery({
@@ -114,6 +116,8 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
     if (!open) return;
     if (!requestId) {
       setForm(emptyForm);
+      setAmountPaid(0);
+      setNewPaymentAmount("");
       return;
     }
     supabase
@@ -132,6 +136,8 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
             ]),
           ) as RequestForm,
         );
+        setAmountPaid(Number(data.amount_paid ?? 0));
+        setNewPaymentAmount("");
       });
   }, [open, requestId]);
 
@@ -147,6 +153,12 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
       toast.error("Customer name and project title are required");
       return;
     }
+    const paymentToRecord = newPaymentAmount === "" ? 0 : Number(newPaymentAmount);
+    if (!Number.isFinite(paymentToRecord) || paymentToRecord < 0) {
+      toast.error("Enter a valid payment amount");
+      return;
+    }
+
     setSaving(true);
     const payload = Object.fromEntries(
       Object.entries(form).map(([key, value]) => [key, value === "" ? null : value]),
@@ -159,15 +171,65 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
     if (!requestId) payload.created_by = userRes.user?.id ?? null;
 
     const q = requestId
-      ? supabase.from("client_requests").update(payload).eq("id", requestId)
-      : supabase.from("client_requests").insert(payload);
-    const { error } = await q;
-    setSaving(false);
+      ? supabase
+          .from("client_requests")
+          .update(payload)
+          .eq("id", requestId)
+          .select("id,agreed_price,amount_paid")
+          .single()
+      : supabase
+          .from("client_requests")
+          .insert(payload)
+          .select("id,agreed_price,amount_paid")
+          .single();
+    const { data: savedRequest, error } = await q;
     if (error) {
+      setSaving(false);
       toast.error(error.message);
       return;
     }
-    toast.success(requestId ? "Request updated" : "Request created");
+
+    if (paymentToRecord > 0 && savedRequest) {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error: paymentError } = await supabase.from("request_payments").insert({
+        request_id: savedRequest.id,
+        amount: paymentToRecord,
+        currency: form.currency || "JOD",
+        recorded_by: userRes.user?.id ?? null,
+      });
+      if (paymentError) {
+        setSaving(false);
+        toast.error(`Request saved, but payment was not recorded: ${paymentError.message}`);
+        return;
+      }
+
+      const totalPaid = Number(savedRequest.amount_paid ?? 0) + paymentToRecord;
+      setAmountPaid(totalPaid);
+      setNewPaymentAmount("");
+      const agreedPrice = Number(savedRequest.agreed_price ?? 0);
+      if (agreedPrice > 0) {
+        const payment_status = totalPaid >= agreedPrice ? "fully_paid" : "partially_paid";
+        const { error: statusError } = await supabase
+          .from("client_requests")
+          .update({ payment_status })
+          .eq("id", savedRequest.id);
+        if (statusError) {
+          setSaving(false);
+          toast.error(`Payment recorded, but status could not be updated: ${statusError.message}`);
+          qc.invalidateQueries();
+          return;
+        }
+      }
+    }
+
+    setSaving(false);
+    toast.success(
+      paymentToRecord > 0
+        ? "Request and payment recorded"
+        : requestId
+          ? "Request updated"
+          : "Request created",
+    );
     qc.invalidateQueries();
     onClose();
   }
@@ -385,6 +447,32 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
                 onChange={(e) => upd("estimated_cost", e.target.value)}
               />
             </Field>
+            {requestId && (
+              <>
+                <Field label="Amount received so far">
+                  <div className={`${input} flex items-center gap-2 bg-muted/50`}>
+                    <span className="text-xs text-muted-foreground">{form.currency || "JOD"}</span>
+                    <span className="font-medium tabular-nums">{amountPaid.toFixed(2)}</span>
+                  </div>
+                </Field>
+                <Field label="Add payment received now">
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    inputMode="decimal"
+                    className={input}
+                    placeholder="e.g. 50.00"
+                    value={newPaymentAmount}
+                    onChange={(e) => setNewPaymentAmount(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter only the new amount the client paid. The total above and dashboard update
+                    automatically.
+                  </p>
+                </Field>
+              </>
+            )}
             <Field label="Payment status">
               <select
                 className={input}
