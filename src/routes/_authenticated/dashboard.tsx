@@ -22,6 +22,7 @@ import {
   DollarSign,
   TrendingUp,
   Users2,
+  UserRound,
   FileClock,
   ArrowRight,
   CheckCircle2,
@@ -182,6 +183,29 @@ function DashboardPage() {
         <Card title={t("remaining")} value={fmtMoney(data.remaining)} icon={DollarSign} />
         <Card title={t("careerApps")} value={data.careerCount} icon={BriefcaseBusiness} />
       </div>
+
+      <section className="rounded-xl border border-primary/25 bg-primary/5 p-5">
+        <div className="mb-4">
+          <h2 className="font-semibold">Partner payment split</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Total received is divided equally between both partners (50% each).
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Card
+            title="Mohannad's share · 50%"
+            value={fmtMoney(data.paid / 2)}
+            icon={UserRound}
+            accent
+          />
+          <Card
+            title="Moayad's share · 50%"
+            value={fmtMoney(data.paid / 2)}
+            icon={UserRound}
+            accent
+          />
+        </div>
+      </section>
 
       <section className="rounded-xl border border-border bg-card/55 p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
