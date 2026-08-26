@@ -28,6 +28,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { PriorityBadge } from "@/components/priority-badge";
 import { RequestDetailPanel } from "@/components/request-detail-panel";
+import { BusinessCategoryBadge } from "@/components/business-category-badge";
+import { getBusinessCategory, type BusinessCategory } from "@/lib/business-categories";
 
 export const Route = createFileRoute("/_authenticated/requests")({
   head: () => ({ meta: [{ title: "Client Requests — NextAura AI" }] }),
@@ -82,6 +84,7 @@ function RequestsPage() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [quick, setQuick] = useState<Quick>(initialQuickFilter);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<{ open: boolean; id: string | null }>({
     open: false,
     id: null,
@@ -136,6 +139,17 @@ function RequestsPage() {
   });
 
   const today = new Date().toISOString().slice(0, 10);
+  const categories = useMemo(() => {
+    const grouped = new Map<string, { category: BusinessCategory; count: number }>();
+    (data ?? []).forEach((request) => {
+      const category = getBusinessCategory(request.business_name);
+      const current = grouped.get(category.key);
+      grouped.set(category.key, { category, count: (current?.count ?? 0) + 1 });
+    });
+    return [...grouped.values()].toSorted(
+      (a, b) => b.count - a.count || a.category.label.localeCompare(b.category.label),
+    );
+  }, [data]);
   const filtered = useMemo(() => {
     let rows = data ?? [];
     if (deferredQuery.trim()) {
@@ -194,8 +208,13 @@ function RequestsPage() {
         rows = rows.filter((r) => r.status === "completed");
         break;
     }
+    if (selectedCategory) {
+      rows = rows.filter(
+        (request) => getBusinessCategory(request.business_name).key === selectedCategory,
+      );
+    }
     return rows;
-  }, [data, deferredQuery, statusFilter, quick, today]);
+  }, [data, deferredQuery, statusFilter, quick, today, selectedCategory]);
 
   async function archive(id: string) {
     if (!confirm("Archive this request?")) return;
@@ -315,6 +334,82 @@ function RequestsPage() {
           </button>
         ))}
       </div>
+
+      {!isLoading && (
+        <section aria-labelledby="request-categories-heading">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 id="request-categories-heading" className="font-semibold">
+                Browse projects by category
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Choose a category to show only its client requests.
+              </p>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {data?.length ?? 0} total projects
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(null)}
+              aria-pressed={!selectedCategory}
+              className={`flex min-h-24 cursor-pointer items-center justify-between rounded-xl border p-4 text-start transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                !selectedCategory
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-card/55 hover:border-primary/40 hover:bg-accent/10"
+              }`}
+            >
+              <span>
+                <span className="block font-semibold">All projects</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  View every category
+                </span>
+              </span>
+              <span className="text-2xl font-semibold text-primary">{data?.length ?? 0}</span>
+            </button>
+            {categories.map(({ category, count }) => (
+              <button
+                key={category.key}
+                type="button"
+                onClick={() => setSelectedCategory(category.key)}
+                aria-pressed={selectedCategory === category.key}
+                className={`flex min-h-24 cursor-pointer items-center justify-between rounded-xl border p-4 text-start transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  selectedCategory === category.key
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-card/55 hover:border-primary/40 hover:bg-accent/10"
+                }`}
+              >
+                <span className="min-w-0">
+                  <BusinessCategoryBadge category={category.label} />
+                  <span className="mt-2 block text-xs text-muted-foreground">
+                    View projects in this category
+                  </span>
+                </span>
+                <span className="text-2xl font-semibold text-primary">{count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {filtered.length} project{filtered.length === 1 ? "" : "s"}
+              {selectedCategory
+                ? ` in ${categories.find((item) => item.category.key === selectedCategory)?.category.label ?? "this category"}`
+                : " shown"}
+            </p>
+            {selectedCategory ? (
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Clear category
+              </button>
+            ) : null}
+          </div>
+        </section>
+      )}
 
       {isLoading ? (
         <div className="text-muted-foreground">{t("loading")}</div>
