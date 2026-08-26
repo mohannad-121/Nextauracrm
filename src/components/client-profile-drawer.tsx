@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { operationsDb, type Client, type ClientTask, type Invoice } from "@/lib/operations-db";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate, fmtMoney } from "@/lib/constants";
+import { BusinessCategoryBadge } from "@/components/business-category-badge";
 
 type RequestSummary = {
   id: string;
@@ -111,9 +112,9 @@ export function ClientProfileDrawer({ client, onClose }: Props) {
                 CLIENT PROFILE
               </p>
               <h2 className="mt-1 truncate text-xl font-semibold">{client.display_name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {client.business_name || "Independent client"}
-              </p>
+              <div className="mt-2">
+                <BusinessCategoryBadge category={client.business_name || "Independent client"} />
+              </div>
             </div>
             <button
               onClick={onClose}

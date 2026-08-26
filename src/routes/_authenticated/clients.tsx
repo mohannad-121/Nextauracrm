@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Mail, MessageCircle, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ClientProfileDrawer } from "@/components/client-profile-drawer";
+import { BusinessCategoryBadge } from "@/components/business-category-badge";
 import { operationsDb, type Client } from "@/lib/operations-db";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -111,9 +112,9 @@ function ClientsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{client.display_name}</p>
-                  <p className="mt-1 truncate text-sm text-primary">
-                    {client.business_name || "Individual"}
-                  </p>
+                  <div className="mt-1">
+                    <BusinessCategoryBadge category={client.business_name || "Individual"} />
+                  </div>
                 </div>
                 <Building2 className="h-5 w-5 shrink-0 text-muted-foreground" />
               </div>
