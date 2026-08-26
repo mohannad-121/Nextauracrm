@@ -91,14 +91,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={it.to}
             to={it.to}
             onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+            className={`sidebar-gradient-hover flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-200 ${
               active
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/40"
             }`}
           >
             <it.icon className="w-4 h-4" />
-            {it.label}
+            <span>{it.label}</span>
           </Link>
         );
       })}
@@ -108,18 +108,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           setOpen(false);
           setAssistantOpen(true);
         }}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/40"
+        className="sidebar-gradient-hover flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent/40"
       >
         <Sparkles className="w-4 h-4" />
-        {t("aiAssistant")}
+        <span>{t("aiAssistant")}</span>
       </button>
       <div className="mt-auto pt-4 border-t border-sidebar-border">
         <button
           onClick={signOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-destructive/20 text-sidebar-foreground"
+          className="sidebar-gradient-hover flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground transition-colors duration-200 hover:bg-destructive/20"
         >
           <LogOut className="w-4 h-4" />
-          {t("signOut")}
+          <span>{t("signOut")}</span>
         </button>
       </div>
     </nav>

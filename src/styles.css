@@ -198,3 +198,62 @@
 @utility brand-gradient-bg {
   background: var(--gradient-brand);
 }
+
+@layer components {
+  .sidebar-gradient-hover {
+    isolation: isolate;
+    position: relative;
+  }
+
+  .sidebar-gradient-hover::before,
+  .sidebar-gradient-hover::after {
+    content: "";
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition:
+      filter 0.4s ease,
+      opacity 0.4s ease;
+  }
+
+  .sidebar-gradient-hover::before {
+    background: linear-gradient(90deg, #03a9f4, #f441a5);
+    border-radius: calc(var(--radius-lg) + 3px);
+    filter: blur(0);
+    inset: -3px;
+    z-index: 0;
+  }
+
+  .sidebar-gradient-hover::after {
+    background: #000;
+    border-radius: var(--radius-lg);
+    inset: 0;
+    z-index: 1;
+  }
+
+  .sidebar-gradient-hover > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  .sidebar-gradient-hover:hover::before,
+  .sidebar-gradient-hover:focus-visible::before {
+    filter: blur(1.2em);
+    opacity: 0.95;
+  }
+
+  .sidebar-gradient-hover:hover::after,
+  .sidebar-gradient-hover:focus-visible::after {
+    opacity: 1;
+  }
+
+  .sidebar-gradient-hover:hover,
+  .sidebar-gradient-hover:focus-visible {
+    box-shadow: 2px 2px 3px #000000b4;
+    color: #fff;
+  }
+
+  .sidebar-gradient-hover:active::before {
+    filter: blur(0.2em);
+  }
+}
