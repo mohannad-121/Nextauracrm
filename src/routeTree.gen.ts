@@ -17,6 +17,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedCareersRouteImport } from './routes/_authenticated/careers'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDeletedProjectsRouteImport } from './routes/_authenticated/deleted-projects'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRequestsRouteImport } from './routes/_authenticated/requests'
@@ -61,6 +62,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDeletedProjectsRoute =
+  AuthenticatedDeletedProjectsRouteImport.update({
+    id: '/deleted-projects',
+    path: '/deleted-projects',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -90,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/careers': typeof AuthenticatedCareersRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/deleted-projects': typeof AuthenticatedDeletedProjectsRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/requests': typeof AuthenticatedRequestsRoute
@@ -103,6 +111,7 @@ export interface FileRoutesByTo {
   '/careers': typeof AuthenticatedCareersRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/deleted-projects': typeof AuthenticatedDeletedProjectsRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/requests': typeof AuthenticatedRequestsRoute
@@ -118,6 +127,7 @@ export interface FileRoutesById {
   '/_authenticated/careers': typeof AuthenticatedCareersRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/deleted-projects': typeof AuthenticatedDeletedProjectsRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/requests': typeof AuthenticatedRequestsRoute
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/careers'
     | '/clients'
     | '/dashboard'
+    | '/deleted-projects'
     | '/pipeline'
     | '/reports'
     | '/requests'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/careers'
     | '/clients'
     | '/dashboard'
+    | '/deleted-projects'
     | '/pipeline'
     | '/reports'
     | '/requests'
@@ -160,6 +172,7 @@ export interface FileRouteTypes {
     | '/_authenticated/careers'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
+    | '/_authenticated/deleted-projects'
     | '/_authenticated/pipeline'
     | '/_authenticated/reports'
     | '/_authenticated/requests'
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/deleted-projects': {
+      id: '/_authenticated/deleted-projects'
+      path: '/deleted-projects'
+      fullPath: '/deleted-projects'
+      preLoaderRoute: typeof AuthenticatedDeletedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pipeline': {
       id: '/_authenticated/pipeline'
       path: '/pipeline'
@@ -267,6 +287,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCareersRoute: typeof AuthenticatedCareersRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDeletedProjectsRoute: typeof AuthenticatedDeletedProjectsRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRequestsRoute: typeof AuthenticatedRequestsRoute
@@ -277,6 +298,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCareersRoute: AuthenticatedCareersRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDeletedProjectsRoute: AuthenticatedDeletedProjectsRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRequestsRoute: AuthenticatedRequestsRoute,

@@ -11,11 +11,12 @@ import {
   Building2,
   KanbanSquare,
   ListTodo,
+  ArchiveRestore,
   BarChart3,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { AiAssistantPanel } from "@/components/ai-assistant-panel";
@@ -30,6 +31,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: canManageDeletedProjects = false } = useQuery({
+    queryKey: ["project-delete-permission"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return false;
+
+      const { data: role, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return role?.role === "admin";
+    },
+  });
 
   async function signOut() {
     await qc.cancelQueries();
@@ -51,6 +67,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/tasks", icon: ListTodo, label: "My work" },
     { to: "/reports", icon: BarChart3, label: "Reports" },
     { to: "/careers", icon: Briefcase, label: t("careerApps") },
+    ...(canManageDeletedProjects
+      ? [{ to: "/deleted-projects", icon: ArchiveRestore, label: "Deleted Projects" }]
+      : []),
   ] as const;
 
   const nav = (

@@ -91,11 +91,14 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
     Number(request?.agreed_price ?? 0) - Number(request?.amount_paid ?? 0),
   );
 
-  async function deleteProject() {
+  async function archiveProject() {
     if (!request || deleteCode !== "0000" || !canDeleteProject) return;
 
     setDeleting(true);
-    const { error } = await supabase.from("client_requests").delete().eq("id", request.id);
+    const { error } = await supabase
+      .from("client_requests")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", request.id);
     setDeleting(false);
 
     if (error) {
@@ -103,7 +106,7 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
       return;
     }
 
-    toast.success("Project deleted.");
+    toast.success("Project moved to Deleted Projects.");
     queryClient.invalidateQueries();
     setDeleteOpen(false);
     setDeleteCode("");
@@ -202,7 +205,7 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete project?</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to permanently delete this project. This action cannot be undone.
+              You are about to delete this project. It can be restored from Deleted Projects.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <input
@@ -218,7 +221,7 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <button
               type="button"
-              onClick={deleteProject}
+              onClick={archiveProject}
               disabled={deleteCode !== "0000" || deleting}
               className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-4 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
             >
