@@ -64,7 +64,7 @@ export function CommandMenu({ open, onOpenChange, onNewRequest, onOpenAssistant 
             }}
           >
             <Plus />
-            New request<CommandShortcut>N</CommandShortcut>
+            New request<CommandShortcut>Shift A R</CommandShortcut>
           </CommandItem>
           <CommandItem
             onSelect={() => {

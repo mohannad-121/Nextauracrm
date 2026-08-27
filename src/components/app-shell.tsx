@@ -14,7 +14,7 @@ import {
   ArchiveRestore,
   BarChart3,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
@@ -28,6 +28,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const pressedKeys = useRef(new Set<string>());
   const navigate = useNavigate();
   const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -54,10 +55,42 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/login", replace: true });
   }
 
-  function createRequest() {
+  const createRequest = useCallback(() => {
     navigate({ to: "/requests" });
     window.setTimeout(() => window.dispatchEvent(new Event("nextaura:new-request")), 0);
-  }
+  }, [navigate]);
+
+  useEffect(() => {
+    const clearPressedKeys = () => pressedKeys.current.clear();
+    const isTextEntry = (target: EventTarget | null) =>
+      target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT");
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || isTextEntry(event.target)) return;
+
+      const key = event.key.toLowerCase();
+      pressedKeys.current.add(key);
+
+      if (event.shiftKey && pressedKeys.current.has("a") && pressedKeys.current.has("r")) {
+        event.preventDefault();
+        clearPressedKeys();
+        createRequest();
+      }
+    };
+    const onKeyUp = (event: KeyboardEvent) => pressedKeys.current.delete(event.key.toLowerCase());
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", clearPressedKeys);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", clearPressedKeys);
+    };
+  }, [createRequest]);
 
   const items = [
     { to: "/dashboard", icon: LayoutDashboard, label: t("dashboard") },
