@@ -200,6 +200,85 @@
 }
 
 @layer components {
+  /*
+   * Shared form-field treatment inspired by the supplied animated search input.
+   * It is intentionally applied to text-entry controls only, so native toggles,
+   * buttons, and file controls retain their expected appearance and behaviour.
+   */
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
+        [type="color"]
+      ):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea
+  ) {
+    --crm-field-surface: color-mix(in oklab, var(--input) 88%, var(--background));
+    background-color: var(--crm-field-surface) !important;
+    background-image:
+      linear-gradient(var(--crm-field-surface), var(--crm-field-surface)),
+      linear-gradient(110deg, #18116a 0%, #03a9f4 32%, #f441a5 52%, #6e1b60 72%, #18116a 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    background-position:
+      center,
+      100% 50%;
+    background-size:
+      100% 100%,
+      240% 100%;
+    border-color: transparent !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      0 0 0 1px color-mix(in oklab, var(--border) 90%, transparent);
+    transition:
+      background-position 700ms ease,
+      box-shadow 400ms ease,
+      filter 400ms ease;
+  }
+
+  @media (hover: hover) {
+    :where(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
+          [type="color"]
+        ):not([type="button"]):not([type="submit"]):not([type="reset"]),
+      textarea
+    ):hover {
+      background-position:
+        center,
+        0% 50%;
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.08),
+        0 0 0 1px rgb(3 169 244 / 0.55),
+        0 0 18px -5px rgb(3 169 244 / 0.55),
+        0 0 22px -9px rgb(244 65 165 / 0.75);
+    }
+  }
+
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
+        [type="color"]
+      ):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea
+  ):focus-visible {
+    background-position:
+      center,
+      42% 50%;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 0 0 1px rgb(3 169 244 / 0.8),
+      0 0 20px -4px rgb(3 169 244 / 0.6),
+      0 0 24px -10px rgb(244 65 165 / 0.8);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
+          [type="color"]
+        ):not([type="button"]):not([type="submit"]):not([type="reset"]),
+      textarea
+    ) {
+      transition: none;
+    }
+  }
+
   .sidebar-gradient-hover {
     isolation: isolate;
     position: relative;
