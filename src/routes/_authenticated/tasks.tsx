@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock3, Plus, UserRound } from "lucide-react";
+import { CheckCircle2, Clock3, Pencil, Plus, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { operationsDb, type ClientTask } from "@/lib/operations-db";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ function TasksPage() {
   const [me, setMe] = useState<string | null>(null);
   const [onlyMine, setOnlyMine] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [editingTask, setEditingTask] = useState<ClientTask | null>(null);
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
   }, []);
@@ -85,6 +86,45 @@ function TasksPage() {
       setAdding(false);
       toast.success("Task created");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    }
+  }
+  async function editTask(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingTask) return;
+    const form = new FormData(event.currentTarget);
+    const title = String(form.get("title") || "").trim();
+    if (!title) {
+      toast.error("Task title cannot be empty.");
+      return;
+    }
+    const requestId = String(form.get("request") || "");
+    const due = String(form.get("due") || "");
+    const status = String(form.get("status") || "open") as ClientTask["status"];
+    const { error } = await operationsDb
+      .from<ClientTask>("client_tasks")
+      .update({
+        title,
+        request_id: requestId || null,
+        priority: String(form.get("priority") || "normal") as ClientTask["priority"],
+        due_at: due ? new Date(`${due}T09:00:00`).toISOString() : null,
+        status,
+        completed_at:
+          status === "done" ? (editingTask.completed_at ?? new Date().toISOString()) : null,
+      })
+      .eq("id", editingTask.id);
+    if (error) toast.error(error.message);
+    else {
+      setEditingTask(null);
+      toast.success("Task updated");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      if (editingTask.request_id) {
+        queryClient.invalidateQueries({
+          queryKey: ["request-tasks", editingTask.request_id],
+        });
+      }
+      if (requestId) {
+        queryClient.invalidateQueries({ queryKey: ["request-tasks", requestId] });
+      }
     }
   }
   return (
@@ -160,6 +200,14 @@ function TasksPage() {
               <span className="w-24 text-end text-xs text-muted-foreground">
                 {fmtDate(task.due_at)}
               </span>
+              <button
+                onClick={() => setEditingTask(task)}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-accent/20 hover:text-foreground"
+                aria-label={`Edit ${task.title}`}
+                title="Edit task"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
             </div>
           ))
         ) : (
@@ -217,6 +265,90 @@ function TasksPage() {
               </button>
               <button className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
                 Create task
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      {editingTask && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+          <form
+            key={editingTask.id}
+            onSubmit={editTask}
+            className="w-full max-w-md rounded-xl bg-background p-5 shadow-2xl"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Edit task</h2>
+              <button
+                type="button"
+                onClick={() => setEditingTask(null)}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-accent/20 hover:text-foreground"
+                aria-label="Close task editor"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3">
+              <Input
+                name="title"
+                required
+                defaultValue={editingTask.title}
+                placeholder="What needs to happen?"
+                className="rounded-md border border-input bg-input px-3 py-2"
+                autoFocus
+              />
+              <select
+                name="request"
+                defaultValue={editingTask.request_id ?? ""}
+                className="rounded-md border border-input bg-input px-3 py-2"
+              >
+                <option value="">No linked request</option>
+                {requests.map((request) => (
+                  <option key={request.id} value={request.id}>
+                    {request.project_title} — {request.customer_name}
+                  </option>
+                ))}
+              </select>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  name="due"
+                  type="date"
+                  defaultValue={editingTask.due_at?.slice(0, 10) ?? ""}
+                  className="rounded-md border border-input bg-input px-3 py-2"
+                />
+                <select
+                  name="priority"
+                  defaultValue={editingTask.priority}
+                  className="rounded-md border border-input bg-input px-3 py-2"
+                >
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+              <select
+                name="status"
+                defaultValue={editingTask.status}
+                className="rounded-md border border-input bg-input px-3 py-2"
+              >
+                <option value="open">Open</option>
+                <option value="in_progress">In progress</option>
+                <option value="done">Done</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingTask(null)}
+                className="rounded-md border border-border px-3 py-2 text-sm"
+              >
+                Cancel
+              </button>
+              <button className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+                <Save className="h-4 w-4" />
+                Save changes
               </button>
             </div>
           </form>
