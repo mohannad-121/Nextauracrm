@@ -125,14 +125,14 @@ function CareerPortal() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search name, phone, ID, field, or link…"
-              className="pl-9"
+              className="w-full pl-9"
             />
           </div>
           <select
             aria-label="Filter by field"
             value={fieldFilter}
             onChange={(event) => setFieldFilter(event.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-9 w-full shrink-0 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring sm:w-64"
           >
             <option value="">All fields</option>
             {fields.map((field) => (

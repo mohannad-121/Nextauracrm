@@ -176,7 +176,7 @@ export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) 
               </button>
             ))}
           </div>
-          <form onSubmit={submitPrompt} className="flex gap-2">
+          <form onSubmit={submitPrompt} className="flex min-w-0 gap-2">
             <Input
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
@@ -184,6 +184,7 @@ export function AiAssistantPanel({ open, onOpenChange }: AiAssistantPanelProps) 
               aria-label="Ask the AI Assistant"
               disabled={loading}
               autoComplete="off"
+              className="min-w-0 flex-1"
             />
             <Button
               type="submit"
