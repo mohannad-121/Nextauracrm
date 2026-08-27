@@ -201,80 +201,156 @@
 
 @layer components {
   /*
-   * Shared form-field treatment inspired by the supplied animated search input.
-   * It is intentionally applied to text-entry controls only, so native toggles,
-   * buttons, and file controls retain their expected appearance and behaviour.
+   * Adapted from "Input" by Lakshay-art on Uiverse.io (MIT License).
+   * The layers reproduce the original dark, rotating blue/pink input frame.
    */
-  :where(
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
-        [type="color"]
-      ):not([type="button"]):not([type="submit"]):not([type="reset"]),
-    textarea
-  ) {
-    --crm-field-surface: color-mix(in oklab, var(--input) 88%, var(--background));
-    background-color: var(--crm-field-surface) !important;
-    background-image:
-      linear-gradient(var(--crm-field-surface), var(--crm-field-surface)),
-      linear-gradient(110deg, #18116a 0%, #03a9f4 32%, #f441a5 52%, #6e1b60 72%, #18116a 100%);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
-    background-position:
-      center,
-      100% 50%;
-    background-size:
-      100% 100%,
-      240% 100%;
-    border-color: transparent !important;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      0 0 0 1px color-mix(in oklab, var(--border) 90%, transparent);
-    transition:
-      background-position 700ms ease,
-      box-shadow 400ms ease,
-      filter 400ms ease;
+  .crm-uiverse-field {
+    isolation: isolate;
+    position: relative;
+    display: block !important;
+    overflow: visible;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .crm-uiverse-field__control {
+    position: relative;
+    z-index: 2;
+    border: 0 !important;
+    background: #010201 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .crm-uiverse-field__layer {
+    position: absolute;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .crm-uiverse-field__layer::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 600px;
+    content: "";
+    background-position: 0 0;
+    background-repeat: no-repeat;
+    transform: translate(-50%, -50%) rotate(82deg);
+    transition: transform 2s ease;
+  }
+
+  .crm-uiverse-field__dark-border {
+    inset: -4px;
+    filter: blur(3px);
+  }
+
+  .crm-uiverse-field__dark-border::before {
+    background-image: conic-gradient(
+      rgb(0 0 0 / 0),
+      #18116a,
+      rgb(0 0 0 / 0) 10%,
+      rgb(0 0 0 / 0) 50%,
+      #6e1b60,
+      rgb(0 0 0 / 0) 60%
+    );
+  }
+
+  .crm-uiverse-field__white {
+    inset: -3px;
+    filter: blur(2px);
+  }
+
+  .crm-uiverse-field__white::before {
+    filter: brightness(1.4);
+    background-image: conic-gradient(
+      rgb(0 0 0 / 0) 0%,
+      #a099d8,
+      rgb(0 0 0 / 0) 8%,
+      rgb(0 0 0 / 0) 50%,
+      #dfa2da,
+      rgb(0 0 0 / 0) 58%
+    );
+    transform: translate(-50%, -50%) rotate(83deg);
+  }
+
+  .crm-uiverse-field__border {
+    inset: -2px;
+    filter: blur(0.5px);
+  }
+
+  .crm-uiverse-field__border::before {
+    filter: brightness(1.3);
+    background-image: conic-gradient(
+      #1c191c,
+      #402fb5 5%,
+      #1c191c 14%,
+      #1c191c 50%,
+      #cf30aa 60%,
+      #1c191c 64%
+    );
+    transform: translate(-50%, -50%) rotate(70deg);
+  }
+
+  .crm-uiverse-field__glow {
+    inset: -18px;
+    z-index: 0;
+    filter: blur(30px);
+    opacity: 0.4;
+  }
+
+  .crm-uiverse-field__glow::before {
+    width: 999px;
+    height: 999px;
+    background-image: conic-gradient(#000, #402fb5 5%, #000 38%, #000 50%, #cf30aa 60%, #000 87%);
+    transform: translate(-50%, -50%) rotate(60deg);
   }
 
   @media (hover: hover) {
-    :where(
-      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
-          [type="color"]
-        ):not([type="button"]):not([type="submit"]):not([type="reset"]),
-      textarea
-    ):hover {
-      background-position:
-        center,
-        0% 50%;
-      box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 0.08),
-        0 0 0 1px rgb(3 169 244 / 0.55),
-        0 0 18px -5px rgb(3 169 244 / 0.55),
-        0 0 22px -9px rgb(244 65 165 / 0.75);
+    .crm-uiverse-field:hover .crm-uiverse-field__dark-border::before {
+      transform: translate(-50%, -50%) rotate(-98deg);
+    }
+
+    .crm-uiverse-field:hover .crm-uiverse-field__white::before {
+      transform: translate(-50%, -50%) rotate(-97deg);
+    }
+
+    .crm-uiverse-field:hover .crm-uiverse-field__border::before {
+      transform: translate(-50%, -50%) rotate(-110deg);
+    }
+
+    .crm-uiverse-field:hover .crm-uiverse-field__glow::before {
+      transform: translate(-50%, -50%) rotate(-120deg);
     }
   }
 
-  :where(
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
-        [type="color"]
-      ):not([type="button"]):not([type="submit"]):not([type="reset"]),
-    textarea
-  ):focus-visible {
-    background-position:
-      center,
-      42% 50%;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.08),
-      0 0 0 1px rgb(3 169 244 / 0.8),
-      0 0 20px -4px rgb(3 169 244 / 0.6),
-      0 0 24px -10px rgb(244 65 165 / 0.8);
+  .crm-uiverse-field:focus-within .crm-uiverse-field__layer::before {
+    transition-duration: 4s;
+  }
+
+  .crm-uiverse-field:focus-within .crm-uiverse-field__dark-border::before {
+    transform: translate(-50%, -50%) rotate(442deg);
+  }
+
+  .crm-uiverse-field:focus-within .crm-uiverse-field__white::before {
+    transform: translate(-50%, -50%) rotate(443deg);
+  }
+
+  .crm-uiverse-field:focus-within .crm-uiverse-field__border::before {
+    transform: translate(-50%, -50%) rotate(430deg);
+  }
+
+  .crm-uiverse-field:focus-within .crm-uiverse-field__glow::before {
+    transform: translate(-50%, -50%) rotate(420deg);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    :where(
-      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(
-          [type="color"]
-        ):not([type="button"]):not([type="submit"]):not([type="reset"]),
-      textarea
-    ) {
+    .crm-uiverse-field__layer::before {
       transition: none;
     }
   }

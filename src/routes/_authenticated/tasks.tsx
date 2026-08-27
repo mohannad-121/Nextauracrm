@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { operationsDb, type ClientTask } from "@/lib/operations-db";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
 
 type RequestName = { id: string; project_title: string; customer_name: string };
 export const Route = createFileRoute("/_authenticated/tasks")({
@@ -175,7 +176,7 @@ function TasksPage() {
           >
             <h2 className="text-lg font-semibold">Create task</h2>
             <div className="mt-4 grid gap-3">
-              <input
+              <Input
                 name="title"
                 required
                 placeholder="What needs to happen?"
@@ -190,7 +191,7 @@ function TasksPage() {
                 ))}
               </select>
               <div className="grid grid-cols-2 gap-3">
-                <input
+                <Input
                   name="due"
                   type="date"
                   className="rounded-md border border-input bg-input px-3 py-2"

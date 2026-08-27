@@ -15,6 +15,8 @@ import {
 } from "@/lib/constants";
 import { useI18n } from "@/lib/i18n";
 import type { Database } from "@/integrations/supabase/types";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type Props = { open: boolean; onClose: () => void; requestId?: string | null };
 
@@ -250,7 +252,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
         <form onSubmit={save} className="p-5 space-y-4">
           <Section title="Customer Information">
             <Field label={t("fullName") + " *"}>
-              <input
+              <Input
                 required
                 className={input}
                 value={form.customer_name}
@@ -258,14 +260,14 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
               />
             </Field>
             <Field label={t("business")}>
-              <input
+              <Input
                 className={input}
                 value={form.business_name}
                 onChange={(e) => upd("business_name", e.target.value)}
               />
             </Field>
             <Field label={t("email")}>
-              <input
+              <Input
                 type="email"
                 className={input}
                 value={form.email}
@@ -273,35 +275,35 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
               />
             </Field>
             <Field label={t("phone")}>
-              <input
+              <Input
                 className={input}
                 value={form.phone}
                 onChange={(e) => upd("phone", e.target.value)}
               />
             </Field>
             <Field label="Secondary phone">
-              <input
+              <Input
                 className={input}
                 value={form.phone_secondary}
                 onChange={(e) => upd("phone_secondary", e.target.value)}
               />
             </Field>
             <Field label={t("whatsapp")}>
-              <input
+              <Input
                 className={input}
                 value={form.whatsapp}
                 onChange={(e) => upd("whatsapp", e.target.value)}
               />
             </Field>
             <Field label={t("country")}>
-              <input
+              <Input
                 className={input}
                 value={form.country}
                 onChange={(e) => upd("country", e.target.value)}
               />
             </Field>
             <Field label={t("city")}>
-              <input
+              <Input
                 className={input}
                 value={form.city}
                 onChange={(e) => upd("city", e.target.value)}
@@ -334,7 +336,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
 
           <Section title="Project Information">
             <Field label={t("projectTitle") + " *"}>
-              <input
+              <Input
                 required
                 className={input}
                 value={form.project_title}
@@ -383,7 +385,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
             </Field>
             <div className="md:col-span-2">
               <Field label="Project description">
-                <textarea
+                <Textarea
                   rows={3}
                   className={input}
                   value={form.project_description ?? ""}
@@ -393,7 +395,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
             </div>
             <div className="md:col-span-2">
               <Field label="Customer requirements">
-                <textarea
+                <Textarea
                   rows={3}
                   className={input}
                   value={form.customer_requirements ?? ""}
@@ -405,7 +407,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
 
           <Section title="Pricing & Payment">
             <Field label="Quoted price">
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
@@ -415,7 +417,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
               />
             </Field>
             <Field label={t("agreedPrice")}>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
@@ -438,7 +440,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
               </select>
             </Field>
             <Field label="Estimated cost">
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
@@ -456,7 +458,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
                   </div>
                 </Field>
                 <Field label="Add payment received now">
-                  <input
+                  <Input
                     type="number"
                     min="0.01"
                     step="0.01"
@@ -491,7 +493,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
           <Section title="Dates & Delivery">
             {DATE_FIELDS.map(([k, l]) => (
               <Field key={k} label={l}>
-                <input
+                <Input
                   type="date"
                   className={input}
                   value={form[k] ?? ""}
@@ -518,7 +520,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
             </Field>
             <div className="md:col-span-2">
               <Field label="Internal notes">
-                <textarea
+                <Textarea
                   rows={3}
                   className={input}
                   value={form.internal_notes ?? ""}
@@ -529,7 +531,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
             {form.status === "rejected" && (
               <div className="md:col-span-2">
                 <Field label="Rejection reason">
-                  <input
+                  <Input
                     className={input}
                     value={form.rejection_reason ?? ""}
                     onChange={(e) => upd("rejection_reason", e.target.value)}
@@ -540,7 +542,7 @@ export function RequestFormDrawer({ open, onClose, requestId }: Props) {
             {form.status === "cancelled" && (
               <div className="md:col-span-2">
                 <Field label="Cancellation reason">
-                  <input
+                  <Input
                     className={input}
                     value={form.cancellation_reason ?? ""}
                     onChange={(e) => upd("cancellation_reason", e.target.value)}

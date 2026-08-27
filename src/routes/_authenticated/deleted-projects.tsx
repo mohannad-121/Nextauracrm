@@ -5,6 +5,7 @@ import { ArchiveRestore, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate, fmtMoney } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -157,7 +158,7 @@ function DeletedProjectsPage() {
               This project will return to the active project list.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <input
+          <Input
             type="password"
             inputMode="numeric"
             autoComplete="off"

@@ -11,6 +11,8 @@ import {
   type Milestone,
 } from "@/lib/operations-db";
 import { fmtDate, fmtMoney } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type RequestData = {
   id: string;
@@ -67,7 +69,7 @@ export function RequestActivityTab({ request }: { request: RequestData }) {
               <option key={option}>{option}</option>
             ))}
           </select>
-          <textarea
+          <Textarea
             rows={2}
             value={content}
             onChange={(event) => setContent(event.target.value)}
@@ -146,7 +148,7 @@ export function RequestTasksTab({ request }: { request: RequestData }) {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <input
+        <Input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           className="min-w-0 flex-1 rounded-md border border-input bg-input px-3 py-2 text-sm"

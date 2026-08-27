@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create account — NextAura AI" }] }),
@@ -107,7 +108,7 @@ function SignupPage() {
                   <label htmlFor="full-name" className="text-sm">
                     {t("fullName")}
                   </label>
-                  <input
+                  <Input
                     id="full-name"
                     type="text"
                     required
@@ -121,7 +122,7 @@ function SignupPage() {
                   <label htmlFor="signup-email" className="text-sm">
                     {t("email")}
                   </label>
-                  <input
+                  <Input
                     id="signup-email"
                     type="email"
                     required
@@ -135,7 +136,7 @@ function SignupPage() {
                   <label htmlFor="signup-password" className="text-sm">
                     {t("password")}
                   </label>
-                  <input
+                  <Input
                     id="signup-password"
                     type="password"
                     required
@@ -151,7 +152,7 @@ function SignupPage() {
                   <label htmlFor="confirm-password" className="text-sm">
                     {t("confirmPassword")}
                   </label>
-                  <input
+                  <Input
                     id="confirm-password"
                     type="password"
                     required

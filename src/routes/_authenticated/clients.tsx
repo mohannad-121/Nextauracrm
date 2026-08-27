@@ -8,6 +8,7 @@ import { BusinessCategoryBadge } from "@/components/business-category-badge";
 import { getBusinessCategory, type BusinessCategory } from "@/lib/business-categories";
 import { operationsDb, type Client } from "@/lib/operations-db";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/clients")({
   component: ClientsPage,
@@ -110,7 +111,7 @@ function ClientsPage() {
       </div>
       <div className="glass-card flex items-center gap-2 p-3">
         <Search className="h-4 w-4 text-muted-foreground" />
-        <input
+        <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none"
@@ -254,7 +255,7 @@ function ClientsPage() {
               ].map(([name, label]) => (
                 <label key={name} className="text-sm">
                   <span className="mb-1 block text-muted-foreground">{label}</span>
-                  <input
+                  <Input
                     name={name}
                     required={name === "name"}
                     className="w-full rounded-md border border-input bg-input px-3 py-2"

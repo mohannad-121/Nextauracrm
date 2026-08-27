@@ -6,6 +6,7 @@ import { operationsDb, type Client, type ClientTask, type Invoice } from "@/lib/
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate, fmtMoney } from "@/lib/constants";
 import { BusinessCategoryBadge } from "@/components/business-category-badge";
+import { Textarea } from "@/components/ui/textarea";
 
 type RequestSummary = {
   id: string;
@@ -223,7 +224,7 @@ export function ClientProfileDrawer({ client, onClose }: Props) {
               <StickyNote className="h-4 w-4 text-primary" />
               Log client note
             </h3>
-            <textarea
+            <Textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={3}

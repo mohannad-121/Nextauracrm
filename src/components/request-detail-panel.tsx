@@ -18,6 +18,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { RequestStageProgress } from "@/components/request-stage-progress";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -208,7 +209,7 @@ export function RequestDetailPanel({ requestId, onClose, onEdit }: Props) {
               You are about to delete this project. It can be restored from Deleted Projects.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <input
+          <Input
             type="password"
             inputMode="numeric"
             autoComplete="off"

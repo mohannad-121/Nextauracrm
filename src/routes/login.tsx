@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -56,7 +57,7 @@ function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm">{t("email")}</label>
-              <input
+              <Input
                 id="login-email"
                 type="email"
                 required
@@ -68,7 +69,7 @@ function LoginPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm">{t("password")}</label>
-              <input
+              <Input
                 id="login-password"
                 type="password"
                 required

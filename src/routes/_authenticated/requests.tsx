@@ -30,6 +30,7 @@ import { PriorityBadge } from "@/components/priority-badge";
 import { RequestDetailPanel } from "@/components/request-detail-panel";
 import { BusinessCategoryBadge } from "@/components/business-category-badge";
 import { getBusinessCategory, type BusinessCategory } from "@/lib/business-categories";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/requests")({
   head: () => ({ meta: [{ title: "Client Requests — NextAura AI" }] }),
@@ -262,7 +263,7 @@ function RequestsPage() {
       <div className="glass-card p-3 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("search")}
