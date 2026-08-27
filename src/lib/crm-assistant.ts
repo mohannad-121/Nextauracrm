@@ -370,6 +370,85 @@ function projectResponse(snapshot: CrmSnapshot): string {
   ].join("\n\n");
 }
 
+function requestedProjectStatus(text: string): string | null {
+  const statusTerms: Array<{ status: string; terms: string[] }> = [
+    {
+      status: "in_progress",
+      terms: [
+        "in progress",
+        "in-progress",
+        "ongoing",
+        "being worked on",
+        "\u0642\u064a\u062f \u0627\u0644\u062a\u0646\u0641\u064a\u0630",
+        "\u0642\u064a\u062f \u0627\u0644\u0639\u0645\u0644",
+      ],
+    },
+    {
+      status: "waiting_for_client",
+      terms: [
+        "waiting for client",
+        "client response",
+        "\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0627\u0644\u0639\u0645\u064a\u0644",
+      ],
+    },
+    {
+      status: "new_lead",
+      terms: ["new lead", "new leads", "\u0639\u0645\u064a\u0644 \u0645\u062d\u062a\u0645\u0644"],
+    },
+    {
+      status: "quote_sent",
+      terms: ["quote sent", "quotation sent", "\u0639\u0631\u0636 \u0633\u0639\u0631"],
+    },
+    {
+      status: "negotiating",
+      terms: ["negotiating", "negotiation", "\u062a\u0641\u0627\u0648\u0636"],
+    },
+    {
+      status: "approved",
+      terms: ["approved", "\u0645\u0648\u0627\u0641\u0642 \u0639\u0644\u064a\u0647"],
+    },
+    {
+      status: "delivered",
+      terms: ["delivered", "\u062a\u0645 \u0627\u0644\u062a\u0633\u0644\u064a\u0645"],
+    },
+    {
+      status: "completed",
+      terms: ["completed", "complete", "finished", "\u0645\u0643\u062a\u0645\u0644"],
+    },
+    { status: "rejected", terms: ["rejected", "\u0645\u0631\u0641\u0648\u0636"] },
+    { status: "cancelled", terms: ["cancelled", "canceled", "\u0645\u0644\u063a\u064a"] },
+  ];
+
+  return statusTerms.find(({ terms }) => includesAny(text, terms))?.status ?? null;
+}
+
+function statusProjectsResponse(snapshot: CrmSnapshot, status: string): string {
+  const projects = snapshot.requests.filter((project) => project.status === status);
+  const label = formatStatus(status);
+
+  if (!projects.length) {
+    return `${EMOJI.folder} No projects are currently marked ${label}.`;
+  }
+
+  const visibleProjects = projects.slice(0, 20);
+  const list = visibleProjects
+    .map((project) => {
+      const currency = project.currency || "JOD";
+      return [
+        `- ${requestReference(project)} — ${project.project_title} for ${project.customer_name}.`,
+        `  ${EMOJI.money} Received ${money(Number(project.amount_paid ?? 0), currency)} of ${money(Number(project.agreed_price ?? 0), currency)}; remaining ${money(requestBalance(project), currency)}.`,
+        `  ${EMOJI.calendar} Delivery: ${dateLabel(project.expected_delivery_date)} | next follow-up: ${dateLabel(project.next_follow_up_date)}.`,
+      ].join("\n");
+    })
+    .join("\n\n");
+  const overflow =
+    projects.length > visibleProjects.length
+      ? `\n\nShowing the first ${visibleProjects.length} of ${projects.length} projects.`
+      : "";
+
+  return `${EMOJI.folder} ${label} projects (${projects.length})\n\n${list}${overflow}`;
+}
+
 function financialResponse(snapshot: CrmSnapshot): string {
   const requests = snapshot.requests;
   const agreed = amountByCurrency(
@@ -642,6 +721,9 @@ export async function answerCrmQuestion(prompt: string): Promise<string> {
   if (isHelpQuestion(normalized)) return helpResponse();
   if (isBroadQuestion(normalized)) return overviewResponse(snapshot);
 
+  const status = requestedProjectStatus(normalized);
+  if (status) return statusProjectsResponse(snapshot, status);
+
   if (
     includesAny(normalized, [
       "delete",
@@ -745,6 +827,9 @@ export async function answerCrmQuestion(prompt: string): Promise<string> {
       "pipeline",
       "lead",
       "status",
+      "in progress",
+      "in-progress",
+      "ongoing",
       "\u0645\u0634\u0631\u0648\u0639",
       "\u0637\u0644\u0628",
       "\u062d\u0627\u0644\u0629",
