@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FileDown, FilePlus2, Paperclip, Plus, Upload } from "lucide-react";
+import { FileDown, FilePlus2, Paperclip, Pencil, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -134,10 +134,26 @@ export function RequestTasksTab({ request }: { request: RequestData }) {
       });
     }
   }
-  async function complete(task: ClientTask) {
+  async function setCompletion(task: ClientTask, completed: boolean) {
     const { error } = await operationsDb
       .from<ClientTask>("client_tasks")
-      .update({ status: "done", completed_at: new Date().toISOString() })
+      .update({
+        status: completed ? "done" : "open",
+        completed_at: completed ? new Date().toISOString() : null,
+      })
+      .eq("id", task.id);
+    if (error) toast.error(error.message);
+    else
+      queryClient.invalidateQueries({
+        queryKey: ["request-tasks", request.id],
+      });
+  }
+  async function edit(task: ClientTask) {
+    const title = window.prompt("Task title", task.title)?.trim();
+    if (!title || title === task.title) return;
+    const { error } = await operationsDb
+      .from<ClientTask>("client_tasks")
+      .update({ title })
       .eq("id", task.id);
     if (error) toast.error(error.message);
     else
@@ -163,11 +179,6 @@ export function RequestTasksTab({ request }: { request: RequestData }) {
       </div>
       {tasks.map((task) => (
         <div key={task.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
-          <button onClick={() => complete(task)} disabled={task.status === "done"}>
-            <CheckCircle2
-              className={`h-5 w-5 ${task.status === "done" ? "text-emerald-400" : "text-muted-foreground"}`}
-            />
-          </button>
           <div className="min-w-0 flex-1">
             <p
               className={
@@ -177,6 +188,29 @@ export function RequestTasksTab({ request }: { request: RequestData }) {
               {task.title}
             </p>
             <p className="text-xs text-muted-foreground">Due {fmtDate(task.due_at)}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <label
+              className="crm-task-checkbox"
+              title={task.status === "done" ? "Mark task incomplete" : "Mark task complete"}
+            >
+              <input
+                type="checkbox"
+                checked={task.status === "done"}
+                onChange={(event) => setCompletion(task, event.target.checked)}
+                aria-label={task.status === "done" ? "Mark task incomplete" : "Mark task complete"}
+              />
+              <span className="crm-task-checkbox__mark" aria-hidden="true" />
+            </label>
+            <button
+              type="button"
+              onClick={() => edit(task)}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label={`Edit task: ${task.title}`}
+              title="Edit task"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
           </div>
         </div>
       ))}
